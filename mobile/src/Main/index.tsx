@@ -8,28 +8,74 @@ import { TableModal } from '../components/TableModal';
 import { useState } from 'react';
 import { Cart } from '../components/Cart';
 import { ICartItem } from '../types/ICartItem';
-import { products } from '../mocks/products';
+import { IProduct } from '../types/IProduct';
 
 export function Main() {
   const [isTableModalVisible, setIsTableModalVisible] = useState(false);
   const [selectedTable, setSelectedTable] = useState('');
-  const [cartItems, setCartItems] = useState<ICartItem[]>([
-    {
-      product: products[0],
-      quantity: 1.
-    },
-    {
-      product: products[1],
-      quantity: 2.
-    }
-  ]);
+  const [cartItems, setCartItems] = useState<ICartItem[]>([]);
 
   function handleSaveTable(table: string) {
     setSelectedTable(table);
+    setIsTableModalVisible(false);
   }
 
   function handleCancelOrder() {
     setSelectedTable('');
+    setCartItems([]);
+  }
+
+  function handleAddToCart(product: IProduct) {
+    if (!selectedTable) {
+      setIsTableModalVisible(true);
+    }
+
+    setCartItems((prevState) => {
+      const itemIndex = prevState.findIndex(
+        (cartItem) => cartItem.product._id === product._id
+      );
+
+      if (itemIndex < 0) {
+        return prevState.concat({
+          quantity: 1,
+          product,
+        });
+      }
+
+      const newCartItem = [...prevState];
+      const item = newCartItem[itemIndex];
+
+      newCartItem[itemIndex] = {
+        ...item,
+        quantity: item.quantity + 1,
+      };
+
+      return newCartItem;
+    });
+  }
+
+  function handleDecrementCart(product: IProduct) {
+    setCartItems((prevState) => {
+      const itemIndex = prevState.findIndex(
+        (cartItem) => cartItem.product._id === product._id
+      );
+
+      const item = prevState[itemIndex];
+      const newCartItem = [...prevState];
+
+      if (item.quantity === 1) {
+        newCartItem.splice(itemIndex, 1);
+
+        return newCartItem;
+      }
+
+      newCartItem[itemIndex] = {
+        ...item,
+        quantity: item.quantity - 1,
+      };
+
+      return newCartItem;
+    });
   }
 
   return (
@@ -45,7 +91,7 @@ export function Main() {
         </S.CateoriesContainer>
 
         <S.MenuContainer>
-          <Menu />
+          <Menu onAddToCart={handleAddToCart} />
         </S.MenuContainer>
 
       </S.Container>
@@ -58,7 +104,11 @@ export function Main() {
           )}
 
           {selectedTable && (
-            <Cart cartItems={cartItems} />
+            <Cart
+              cartItems={cartItems}
+              onAdd={handleAddToCart}
+              onDecrement={handleDecrementCart}
+            />
           )}
         </S.FooterContainer>
       </S.Footer>
