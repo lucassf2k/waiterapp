@@ -9,18 +9,20 @@ import { useState } from 'react';
 import { Cart } from '../components/Cart';
 import { ICartItem } from '../types/ICartItem';
 import { IProduct } from '../types/IProduct';
+import { ActivityIndicator } from 'react-native';
 
 export function Main() {
   const [isTableModalVisible, setIsTableModalVisible] = useState(false);
   const [selectedTable, setSelectedTable] = useState('');
   const [cartItems, setCartItems] = useState<ICartItem[]>([]);
+  const [isLoading] = useState(false);
 
   function handleSaveTable(table: string) {
     setSelectedTable(table);
     setIsTableModalVisible(false);
   }
 
-  function handleCancelOrder() {
+  function handleResetOrder() {
     setSelectedTable('');
     setCartItems([]);
   }
@@ -83,22 +85,35 @@ export function Main() {
       <S.Container>
         <Header
           selectedTable={selectedTable}
-          onCancelOrder={handleCancelOrder}
+          onCancelOrder={handleResetOrder}
         />
 
-        <S.CateoriesContainer>
-          <Categories />
-        </S.CateoriesContainer>
+        {isLoading && (
+          <S.CenteredContainer>
+            <ActivityIndicator color="#3C92DE" size="large" />
+          </S.CenteredContainer>
+        )}
 
-        <S.MenuContainer>
-          <Menu onAddToCart={handleAddToCart} />
-        </S.MenuContainer>
+        {!isLoading && (
+          <>
+            <S.CateoriesContainer>
+              <Categories />
+            </S.CateoriesContainer>
+
+            <S.MenuContainer>
+              <Menu onAddToCart={handleAddToCart} />
+            </S.MenuContainer>
+          </>
+        )}
 
       </S.Container>
       <S.Footer>
         <S.FooterContainer>
           {!selectedTable && (
-            <Button onPress={() => setIsTableModalVisible(true)}>
+            <Button
+              onPress={() => setIsTableModalVisible(true)}
+              disabled={isLoading}
+            >
               Novo Pedido
             </Button>
           )}
@@ -108,6 +123,7 @@ export function Main() {
               cartItems={cartItems}
               onAdd={handleAddToCart}
               onDecrement={handleDecrementCart}
+              onConfirmOrder={handleResetOrder}
             />
           )}
         </S.FooterContainer>
